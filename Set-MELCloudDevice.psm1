@@ -66,13 +66,14 @@
         [Alias('Temp')]
         [string[]]$Temperature = '0',           # default value added by HS - 0 means no change
 
- <#                                             # fan speed ignored by setting - commented out
+ #<#                                             # fan speed ignored by setting - commented out
         [Parameter(Mandatory = $false,
         ValueFromPipeline = $False,
         HelpMessage = "Set fan speed")]
-        [ValidateRange (0,6)]
+        [ValidateRange (0,7)]
         [Alias('Fan')]
-        [int]$FanSpeed = 0,                   # default value added by HS - 0 means no change
+        [int]$FanSpeed = 7,                   # default value added by HS - 7 means no change
+                                              # value 0 means AUTO  
 #>
         [Parameter(Mandatory = $False,
         ValueFromPipeline = $False)]
@@ -101,7 +102,11 @@
         [Parameter(Mandatory=$False,
         ValueFromPipeline = $False)]
         [ValidateSet ('On', 'Off', ignorecase = $True)]
-        [string]$Power = 'On'
+        [string]$Power = 'On',
+
+        [Parameter(Mandatory=$False)]
+        [Switch]$FanSpeedAuto
+        
 
 )
 
@@ -139,13 +144,14 @@ PROCESS {
         elseif ($VerticalSwing -eq "Auto") {$VaneVerticalMode = "6"}
         else {$VaneVerticalMode = $VaneVertical}
 
-        if ($VaneHorizontalMode -eq '0' -or $VaneHorizontalMode -eq '0')
+        if ($VaneHorizontalMode -eq '0' -or $VaneHorizontalMode -eq '0' -or $FanSpeed -eq '7')
         {
-            $deviceinfo = Get-MELCloudDeviceInfo -ContextKey $ContextKey | select -Property *direction
+            $deviceinfo = Get-MELCloudDeviceInfo -ContextKey $ContextKey | select -Property *direction, FanSpeed
             if ($VaneHorizontalMode -eq '0') {$VaneHorizontalMode = $deviceinfo.VaneHorizontalDirection}
             if ($VaneVerticalMode -eq '0') {$VaneVerticalMode = $deviceinfo.VaneVerticalDirection}
-
+            if ($FanSpeed -eq '7') {$FanSpeed = $deviceinfo.FanSpeed}
         }
+        if ($FanSpeedAuto) {$FanSpeed = 0}
         
 
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
